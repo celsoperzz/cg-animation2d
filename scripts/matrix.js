@@ -5,10 +5,10 @@ class Matrix {
         this.data = [];
         var i, j;
         for (i = 0; i < this.rows; i++) {
-            this.data.push([]);
-            for (j = 0; j < this.columns; j++) {
-                if (i === j) this.data[i].push(1);
-                else         this.data[i].push(0);
+            this.data.push([]); // create new row
+            for (j = 0; j < this.columns; j++) { // create new column
+                if (i === j) this.data[i].push(1); 
+                else         this.data[i].push(0); 
             }
         }
     }
@@ -102,7 +102,7 @@ class Matrix {
     // transpose
     transpose() {
         let result = new Matrix(this.columns, this.rows);
-        let i, j;
+        let i, j; // i: row index, j: column index
         for (i = 0; i < this.rows; i++) {
             for (j = 0; j < this.columns; j++) {
                 result.data[j][i] = this.data[i][j];

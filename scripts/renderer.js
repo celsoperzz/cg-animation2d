@@ -15,8 +15,6 @@ class Renderer {
         this.start_time = null;
         this.prev_time = null;
 
-        
-        console.log('hello');
         this.models = {
             slide0: [
                 // example model (diamond) -> should be replaced with actual model
