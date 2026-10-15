@@ -128,13 +128,12 @@ class Renderer {
         }
 
         // create new 3x3 matrix to store the ball's transformation
-        ball.transform = new CG.Matrix(3, 3);
+        ball.transform = new Matrix(3, 3);
 
         // turn into a translation matrix to move the ball to its new position
         CG.mat3x3Translate(ball.transform, ball.x, ball.y);
     }
     
-    //
     drawSlide() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -160,11 +159,13 @@ class Renderer {
         
         // apply the transformation to the ball's vertices
         let ball = this.models.slide0[0];
+
         // empty array to store new positions of the ball's vertices after transformation
         // array because ball is made up of 40 vertices (points)(num_edges = 40)
         let transformedVertices = []; 
+
         for (let v of ball.vertices) { // iterate through each vertex of the ball
-            let newVertex = ball.transform.mult(v); // multiply the transformation matrix by the vertex to get the new position
+            let newVertex = ball.transform.multiply(v); // multiply the transformation matrix by the vertex to get the new position
             transformedVertices.push(newVertex); // add the new position to the array
         }
         
