@@ -1,4 +1,5 @@
 import * as CG from './transforms.js';
+import { Matrix } from './matrix.js'; // since we created a new Matrix class, we need to import it here to use it in the Renderer class
 
 class Renderer {
     // canvas:              object ({id: __, width: __, height: __})
@@ -19,19 +20,30 @@ class Renderer {
             slide0: [
                 // example model (diamond) -> should be replaced with actual model
                 {
-                    vertices: [
+                    /* vertices: [
                         CG.Vector3(400, 150, 1),
                         CG.Vector3(500, 300, 1),
                         CG.Vector3(400, 450, 1),
                         CG.Vector3(300, 300, 1)
                     ],
                     transform: null
+                    */
+                   vertices: [], transform: null, x: 150, y: 150, vx: 100, vy: 100, radius: 50
                 }
             ],
             slide1: [],
             slide2: [],
             slide3: []
         };
+
+        // create 40 vertices for the ball 
+        for (let i = 0; i < 40; i++) {
+            let theta = (i / 40) * 2 * Math.PI; // radians
+            let x = this.models.slide0[0].radius * Math.cos(theta); // x coordinate
+            let y = this.models.slide0[0].radius * Math.sin(theta); // y coordinate
+            this.models.slide0[0].vertices.push(CG.Vector3(x, y, 1)); // add vertex to the ball's vertices array
+        }
+
     }
 
     // flag:  bool
@@ -55,8 +67,8 @@ class Renderer {
             this.start_time = timestamp;
             this.prev_time = timestamp;
         }
-        let time = timestamp - this.start_time;
-        let delta_time = timestamp - this.prev_time;
+        let time = timestamp - this.start_time; // time since start of animation
+        let delta_time = timestamp - this.prev_time; // time since last frame
         //console.log('animate(): t = ' + time.toFixed(1) + ', dt = ' + delta_time.toFixed(1));
 
         // Update transforms for animation
@@ -86,6 +98,40 @@ class Renderer {
     //
     updateTransforms(time, delta_time) {
         // TODO: update any transformations needed for animation
+        let dtSec = delta_time / 1000.0; // converts delta_time from milliseconds to seconds
+
+        let ball = this.models.slide0[0];
+
+        // update ball position based on its velocity and delta time
+        ball.x += ball.vx * dtSec;
+        ball.y += ball.vy * dtSec;
+
+        // check for right wall collisions
+        if (ball.x + ball.radius > this.canvas.width) {
+            ball.x = this.canvas.width - ball.radius; // reposition to the edge
+            ball.vx *= -1; // reverse x velocity
+        } 
+        // check for left wall collisions
+        if (ball.x - ball.radius < 0) {
+            ball.x = ball.radius; // reposition to the edge
+            ball.vx *= -1; // reverse x velocity
+        }
+        // check for bottom wall collisions
+        if (ball.y + ball.radius > this.canvas.height) {
+            ball.y = this.canvas.height - ball.radius; // reposition to the edge
+            ball.vy *= -1; // reverse y velocity
+        } 
+        // check for top wall collisions
+        if (ball.y - ball.radius < 0) {
+            ball.y = ball.radius; // reposition to the edge
+            ball.vy *= -1; // reverse y velocity
+        }
+
+        // create new 3x3 matrix to store the ball's transformation
+        ball.transform = new CG.Matrix(3, 3);
+
+        // turn into a translation matrix to move the ball to its new position
+        CG.mat3x3Translate(ball.transform, ball.x, ball.y);
     }
     
     //
@@ -112,6 +158,15 @@ class Renderer {
     drawSlide0() {
         // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
         
+        // apply the transformation to the ball's vertices
+        let ball = this.models.slide0[0];
+        // empty array to store new positions of the ball's vertices after transformation
+        // array because ball is made up of 40 vertices (points)(num_edges = 40)
+        let transformedVertices = []; 
+        for (let v of ball.vertices) { // iterate through each vertex of the ball
+            let newVertex = ball.transform.mult(v); // multiply the transformation matrix by the vertex to get the new position
+            transformedVertices.push(newVertex); // add the new position to the array
+        }
         
         // Following lines are example of drawing a single polygon
         // (this should be removed/edited after you implement the slide)
