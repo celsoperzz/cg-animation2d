@@ -172,7 +172,7 @@ class Renderer {
         // Following lines are example of drawing a single polygon
         // (this should be removed/edited after you implement the slide)
         let teal = [0, 128, 128, 255];
-        this.drawConvexPolygon(this.models.slide0[0].vertices, teal);
+        this.drawConvexPolygon(transformedVertices, teal);
     }
 
     //
