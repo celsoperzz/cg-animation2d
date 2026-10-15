@@ -165,7 +165,7 @@ class Renderer {
         let transformedVertices = []; 
 
         for (let v of ball.vertices) { // iterate through each vertex of the ball
-            let newVertex = ball.transform.multiply(v); // multiply the transformation matrix by the vertex to get the new position
+            let newVertex = ball.transform.mult(v); // multiply the transformation matrix by the vertex to get the new position
             transformedVertices.push(newVertex); // add the new position to the array
         }
         
