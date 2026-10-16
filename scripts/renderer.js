@@ -16,6 +16,14 @@ class Renderer {
         this.start_time = null;
         this.prev_time = null;
 
+        // Slide 1: spinning polygon angles
+        this.spinAngle1 = 0;
+        this.spinAngle2 = 0;
+        this.spinAngle3 = 0;
+
+        // Slide 3: fun animation
+        this.funAngle = 0;
+
         this.models = {
             slide0: [
                 // example model (diamond) -> should be replaced with actual model
@@ -31,7 +39,53 @@ class Renderer {
                    vertices: [], transform: null, x: 150, y: 150, vx: 100, vy: 100, radius: 50
                 }
             ],
-            slide1: [],
+            slide1: [
+                {
+                    // Triangle vertices centered around (0, 0)
+                    vertices: [
+                        CG.Vector3(0, -50, 1),
+                        CG.Vector3(45, 35, 1),
+                        CG.Vector3(-45, 35, 1)
+                    ],
+                    x: 150,
+                    y: 150,
+                    speed: 1.0,
+                    angle: 0,
+                    color: [255, 80, 80, 255],
+                    transform: null
+                },
+                {
+                    // Square vertices centered around (0, 0)
+                    vertices: [
+                        CG.Vector3(-40, -40, 1),
+                        CG.Vector3(40, -40, 1),
+                        CG.Vector3(40, 40, 1),
+                        CG.Vector3(-40, 40, 1)
+                    ],
+                    x: 400,
+                    y: 150,
+                    speed: -1.5,
+                    angle: 0,
+                    color: [70, 150, 255, 255],
+                    transform: null
+                },
+                {
+                    // Pentagon vertices centered around (0, 0)
+                    vertices: [
+                        CG.Vector3(0, -50, 1),
+                        CG.Vector3(48, -15, 1),
+                        CG.Vector3(30, 40, 1),
+                        CG.Vector3(-30, 40, 1),
+                        CG.Vector3(-48, -15, 1)
+                    ],
+                    x: 650,
+                    y: 150,
+                    speed: 0.7,
+                    angle: 0,
+                    color: [80, 210, 130, 255],
+                    transform: null
+                }
+            ],
             // constructor
             slide2: [
                 {
@@ -60,9 +114,49 @@ class Renderer {
                     y: 300,
                     transform: null
                 },
-                
+
             ],
-            slide3: []
+            slide3: [
+                {
+                    vertices: this.createStarVertices(50, 20),
+                    baseX: 200,
+                    baseY: 200,
+                    x: 200,
+                    y: 200,
+                    angle: 0,
+                    rotateSpeed: 1.5,
+                    scaleAmount: 0.3,
+                    moveDistance: 50,
+                    color: [255, 215, 0, 255],
+                    transform: null
+                },
+                {
+                    vertices: this.createStarVertices(40, 16),
+                    baseX: 400,
+                    baseY: 200,
+                    x: 400,
+                    y: 200,
+                    angle: 0,
+                    rotateSpeed: -1.2,
+                    scaleAmount: 0.25,
+                    moveDistance: 40,
+                    color: [255, 100, 150, 255],
+                    transform: null
+                },
+                {
+                    vertices: this.createStarVertices(45, 18),
+                    baseX: 600,
+                    baseY: 200,
+                    x: 600,
+                    y: 200,
+                    angle: 0,
+                    rotateSpeed: 1,
+                    scaleAmount: 0.35,
+                    moveDistance: 30,
+                    color: [100, 200, 255, 255],
+                    transform: null
+                }
+            ],
         };
 
         // create 40 vertices for the ball 
@@ -164,6 +258,28 @@ class Renderer {
         // turn into a translation matrix to move the ball to its new position
         CG.mat3x3Translate(ball.transform, ball.x, ball.y);
 
+
+        // ----- SLIDE 1: SPINNING POLYGONS
+        let dtSec3 = delta_time / 1000.0;
+
+        for (let i = 0; i < this.models.slide1.length; i++) {
+            let polygon = this.models.slide1[i];
+
+            // Update the rotation angle based on elapsed time
+            polygon.angle += polygon.speed * dtSec3;
+
+            // Create rotation and translation matrices
+            let R = new Matrix(3, 3);
+            let T = new Matrix(3, 3);
+
+            CG.mat3x3Rotate(R, polygon.angle);
+            CG.mat3x3Translate(T, polygon.x, polygon.y);
+
+            // Rotate first, then move to the polygon's position
+            polygon.transform = T.mult(R);
+        }
+
+
         // -----SLIDE 2: GROW / SHRINK 
         let dtSec2 = time / 1000.0; // converts total animation time from milliseconds to seconds
 
@@ -171,7 +287,7 @@ class Renderer {
         let hexagon = this.models.slide2[1];
 
         let diamondScale = 1 + 0.5 * Math.sin(2 * Math.PI * 0.5 * dtSec2);
-        
+
         // grow and shrinking hexagon
         let scaleX = 1 + 0.6 * Math.sin(2 * Math.PI * 0.4 * dtSec2);
         let scaleY = 1 + 0.3 * Math.sin(2 * Math.PI * 0.8 * dtSec2);
@@ -193,8 +309,39 @@ class Renderer {
         CG.mat3x3Translate(T2, hexagon.x, hexagon.y);
 
         hexagon.transform = T2.mult(S2);
+
+
+        // ----- SLIDE 3: ANIMATED STARS - FUN ANIMATION
+        let dtSec4 = delta_time / 1000.0;
+        let timeSec4 = time / 1000.0;
+
+        for (let i = 0; i < this.models.slide3.length; i++) {
+            let star = this.models.slide3[i];
+
+            star.angle += star.rotateSpeed * dtSec4;
+
+            star.x = star.baseX +
+                Math.sin(timeSec4 + i) * star.moveDistance;
+
+            star.y = star.baseY +
+                Math.cos(timeSec4 + i) * star.moveDistance * 0.5;
+
+            let scaleAmount =
+                1 + star.scaleAmount * Math.sin(timeSec4 * 2 + i);
+
+            let R = new Matrix(3, 3);
+            CG.mat3x3Rotate(R, star.angle);
+
+            let S = new Matrix(3, 3);
+            CG.mat3x3Scale(S, scaleAmount, scaleAmount);
+
+            let T = new Matrix(3, 3);
+            CG.mat3x3Translate(T, star.x, star.y);
+
+            star.transform = T.mult(R.mult(S));
+        }
     }
-    
+
     drawSlide() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -213,6 +360,7 @@ class Renderer {
                 break;
         }
     }
+
 
     drawSlide0() {
         // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
@@ -239,8 +387,23 @@ class Renderer {
     drawSlide1() {
         // TODO: draw at least 3 polygons that spin about their own centers
         //   - have each polygon spin at a different speed / direction
-        
-        
+
+        for (let i = 0; i < this.models.slide1.length; i++) {
+            let polygon = this.models.slide1[i];
+            let transformedVertices = [];
+
+            // Transform every vertex of the polygon
+            for (let v of polygon.vertices) {
+                let newVertex = polygon.transform.mult(v);
+                transformedVertices.push(newVertex);
+            }
+
+            // Draw the polygon
+            this.drawConvexPolygon(
+                transformedVertices,
+                polygon.color
+            );
+        }
     }
 
     //
@@ -272,14 +435,44 @@ class Renderer {
         this.drawConvexPolygon(transformHexagon, blue);
     }
 
-    //
+    // for slide3 - fun
+    createStarVertices(outerRadius, innerRadius) {
+    let vertices = [];
+
+    for (let i = 0; i < 10; i++) {
+        let angle = (Math.PI / 5) * i - Math.PI / 2;
+        let radius = (i % 2 === 0) ? outerRadius : innerRadius;
+
+        vertices.push(CG.Vector3(
+            Math.cos(angle) * radius,
+            Math.sin(angle) * radius,
+            1
+        ));
+    }
+
+    return vertices;
+}
+
+//
     drawSlide3() {
         // TODO: get creative!
         //   - animation should involve all three basic transformation types
         //     (translation, scaling, and rotation)
-        
-        
+
+        for (let i = 0; i < this.models.slide3.length; i++) {
+            let star = this.models.slide3[i];
+            let transformedVertices = [];
+
+            for (let j = 0; j < star.vertices.length; j++) {
+                let v = star.vertices[j];
+                let transformed = star.transform.mult(v);
+                transformedVertices.push(transformed);
+            }
+
+            this.drawConvexPolygon(transformedVertices, star.color);
+        }
     }
+
     
     // vertex_list:  array of object [Matrix(3, 1), Matrix(3, 1), ..., Matrix(3, 1)]
     // color:        array of int [R, G, B, A]
