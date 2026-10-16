@@ -32,7 +32,36 @@ class Renderer {
                 }
             ],
             slide1: [],
-            slide2: [],
+            // constructor
+            slide2: [
+                {
+                    // diamond
+                    vertices: [
+                        CG.Vector3(0, -150, 1),
+                        CG.Vector3(100, 0, 1),
+                        CG.Vector3(0, 150, 1),
+                        CG.Vector3(-100, 0, 1)
+                    ],
+                    x: 220,
+                    y: 300,
+                    transform: null
+                },
+                {
+                    // hexagon
+                    vertices: [
+                        CG.Vector3(-50, -90, 1),
+                        CG.Vector3(50, -90, 1),
+                        CG.Vector3(100, 0, 1),
+                        CG.Vector3(50, 90, 1),
+                        CG.Vector3(-50, 90, 1),
+                        CG.Vector3(-100, 0, 1)
+                    ],
+                    x: 570,
+                    y: 300,
+                    transform: null
+                },
+                
+            ],
             slide3: []
         };
 
@@ -98,6 +127,8 @@ class Renderer {
     //
     updateTransforms(time, delta_time) {
         // TODO: update any transformations needed for animation
+
+        // -----SLIDE 0: BOUNCING BALL
         let dtSec = delta_time / 1000.0; // converts delta_time from milliseconds to seconds
 
         let ball = this.models.slide0[0];
@@ -132,6 +163,36 @@ class Renderer {
 
         // turn into a translation matrix to move the ball to its new position
         CG.mat3x3Translate(ball.transform, ball.x, ball.y);
+
+        // -----SLIDE 2: GROW / SHRINK 
+        let dtSec2 = time / 1000.0; // converts total animation time from milliseconds to seconds
+
+        let diamond = this.models.slide2[0];
+        let hexagon = this.models.slide2[1];
+
+        let diamondScale = 1 + 0.5 * Math.sin(2 * Math.PI * 0.5 * dtSec2);
+        
+        // grow and shrinking hexagon
+        let scaleX = 1 + 0.6 * Math.sin(2 * Math.PI * 0.4 * dtSec2);
+        let scaleY = 1 + 0.3 * Math.sin(2 * Math.PI * 0.8 * dtSec2);
+
+        // diamond transformation matrix
+        let S1 = new Matrix(3, 3); // scaling matrix
+        let T1 = new Matrix(3, 3); // translation matrix
+
+        CG.mat3x3Scale(S1, diamondScale, diamondScale);
+        CG.mat3x3Translate(T1, diamond.x, diamond.y);
+
+        diamond.transform = T1.mult(S1); // combine scale (first) and translation (second) matrices to get the final transformation matrix for the diamond
+
+        // hexagon transformation matrix
+        let S2 = new Matrix(3, 3); // scaling matrix
+        let T2 = new Matrix(3, 3); // translation matrix
+
+        CG.mat3x3Scale(S2, scaleX, scaleY);
+        CG.mat3x3Translate(T2, hexagon.x, hexagon.y);
+
+        hexagon.transform = T2.mult(S2);
     }
     
     drawSlide() {
@@ -153,7 +214,6 @@ class Renderer {
         }
     }
 
-    //
     drawSlide0() {
         // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
         
@@ -188,8 +248,28 @@ class Renderer {
         // TODO: draw at least 2 polygons grow and shrink about their own centers
         //   - have each polygon grow / shrink different sizes
         //   - try at least 1 polygon that grows / shrinks non-uniformly in the x and y directions
+        let diamond = this.models.slide2[0];
+        let hexagon = this.models.slide2[1];
 
+        let transformDiamond = [];
+        let transformHexagon = [];
 
+        for (let v of diamond.vertices) {
+            let newVertex = diamond.transform.mult(v);
+            transformDiamond.push(newVertex);
+        }
+
+        for (let v of hexagon.vertices) {
+            let newVertex = hexagon.transform.mult(v);
+            transformHexagon.push(newVertex);
+        }
+
+        let green = [0, 255, 0, 255];
+        let blue = [0, 0, 255, 255];
+
+        // draw the polygons using the transformed vertices
+        this.drawConvexPolygon(transformDiamond, green);
+        this.drawConvexPolygon(transformHexagon, blue);
     }
 
     //
